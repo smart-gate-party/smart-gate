@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Project specific ###
+*.db
+.env
+.env.local
