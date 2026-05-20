@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoring - SmartGate AI</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="dashboard-layout">
+    <div class="sidebar">
+        <div>
+            <div class="logo sidebar-logo">SmartGate AI</div>
+            <div class="menu">
+                <button onclick="location.href='dashboard.html'">Dashboard</button>
+                <button class="active-btn" onclick="location.href='monitoring.html'">Monitoring</button>
+                <button onclick="location.href='barrier.html'">Barrier Control</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="topbar">
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <h1 class="page-title">Real-Time Monitoring</h1>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span>AI Status</span>
+                <h2 style="color:#00d084">Active</h2>
+            </div>
+            <div class="stat-card">
+                <span>Detections Today</span>
+                <h2 id="detections-today">—</h2>
+            </div>
+            <div class="stat-card">
+                <span>Access Granted</span>
+                <h2 id="access-granted" style="color:#00d084">—</h2>
+            </div>
+            <div class="stat-card">
+                <span>Access Denied</span>
+                <h2 id="access-denied" style="color:#ff4444">—</h2>
+            </div>
+        </div>
+
+        <div class="monitor-layout">
+            <div class="camera-feed">
+                <h3>Live Camera Feed</h3>
+                <div style="text-align:center; padding:40px; color:#666;">
+                    <p style="font-size:48px;">📷</p>
+                    <p>Camera Feed Active</p>
+                    <p style="font-size:12px;">AI License Plate Detection Running</p>
+                </div>
+            </div>
+
+            <div class="history-panel">
+                <h3>Detection History</h3>
+                <div id="history-list"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_URL = '';
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = 'login.html';
+
+    function authHeaders() {
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
+    }
+
+    function logout() {
+        localStorage.removeItem('token');
+        window.location.href = 'login.html';
+    }
+
+    function formatTime(ts) {
+        return new Date(ts).toLocaleString();
+    }
+
+    async function loadLogs() {
+        try {
+            const res = await fetch(`${API_URL}/api/logs`, { headers: authHeaders() });
+            const logs = await res.json();
+
+            const today = new Date().toDateString();
+            const todayLogs = logs.filter(l => new Date(l.timestamp).toDateString() === today);
+            const granted = todayLogs.filter(l => l.accessGranted).length;
+            const denied = todayLogs.filter(l => !l.accessGranted).length;
+
+            document.getElementById('detections-today').textContent = todayLogs.length;
+            document.getElementById('access-granted').textContent = granted;
+            document.getElementById('access-denied').textContent = denied;
+
+            const list = document.getElementById('history-list');
+            list.innerHTML = logs.slice(0, 20).map(l => `
+                <div class="history-item ${l.accessGranted ? 'green-history' : 'red-history'}">
+                    <strong>${l.plateNumber}</strong>
+                    <span class="status ${l.accessGranted ? 'allowed' : 'denied'}">
+                        ${l.accessGranted ? 'Granted' : 'Denied'}
+                    </span>
+                    <br>
+                    <small>${formatTime(l.timestamp)}</small>
+                </div>
+            `).join('');
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    loadLogs();
+    setInterval(loadLogs, 5000); // обновляем каждые 5 секунд
+</script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SmartGate AI</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="login-page">
+    <div class="left-side">
+        <div class="logo">SmartGate AI</div>
+        <h1>Welcome to<br><span>SmartGate AI</span></h1>
+        <p>AI-powered gate automation and parking management for modern enterprises</p>
+        <div class="features">
+            <div class="feature">Advanced Security & Access Control</div>
+            <div class="feature">Real-Time AI License Plate Recognition</div>
+            <div class="feature">Enterprise-Grade Data Protection</div>
+        </div>
+    </div>
+    <div class="login-card">
+        <h2>Log In</h2>
+        <p>Access your SmartGate AI Dashboard</p>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <div id="error-msg" style="color:#EF4444;font-size:14px;margin-bottom:16px;display:none;"></div>
+        <button class="green-btn full-btn" onclick="login()">Log In To Dashboard →</button>
+    </div>
+</div>
+<script>
+    async function login() {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
+        const errorMsg = document.getElementById('error-msg');
+
+        if (!username || !password) {
+            errorMsg.textContent = 'Please enter username and password';
+            errorMsg.style.display = 'block';
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                localStorage.setItem('token', data.token);
+                window.location.href = '/dashboard.html';
+            } else {
+                errorMsg.textContent = 'Invalid username or password';
+                errorMsg.style.display = 'block';
+            }
+        } catch (e) {
+            errorMsg.textContent = 'Cannot connect to server';
+            errorMsg.style.display = 'block';
+        }
+    }
+
+    document.addEventListener('keypress', e => {
+        if (e.key === 'Enter') login();
+    });
+</script>
+</body>
+</html>

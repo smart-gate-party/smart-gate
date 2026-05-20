@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barrier Control - SmartGate AI</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="dashboard-layout">
+    <div class="sidebar">
+        <div>
+            <div class="logo sidebar-logo">SmartGate AI</div>
+            <div class="menu">
+                <button onclick="location.href='dashboard.html'">Dashboard</button>
+                <button onclick="location.href='monitoring.html'">Monitoring</button>
+                <button class="active-btn" onclick="location.href='barrier.html'">Barrier Control</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="topbar">
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <h1 class="page-title">Smart Barrier Control</h1>
+
+        <div class="barrier-card">
+            <div id="status" class="barrier-status closed">Closed</div>
+
+            <div class="barrier-box">
+                <div class="pole"></div>
+                <div id="barrier"></div>
+            </div>
+
+            <div class="barrier-buttons">
+                <button class="green-btn" onclick="openBarrier()">↑ Open Barrier</button>
+                <button class="dark-btn" onclick="closeBarrier()">↓ Close Barrier</button>
+            </div>
+
+            <div id="barrier-msg" style="margin-top:16px; font-size:14px; color:#888;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_URL = '';
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = 'login.html';
+
+    function authHeaders() {
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
+    }
+
+    function logout() {
+        localStorage.removeItem('token');
+        window.location.href = 'login.html';
+    }
+
+    function setBarrierState(isOpen) {
+        const status = document.getElementById('status');
+        const barrier = document.getElementById('barrier');
+        const msg = document.getElementById('barrier-msg');
+
+        if (isOpen) {
+            status.textContent = 'Open';
+            status.className = 'barrier-status open';
+            barrier.classList.add('open');
+            msg.textContent = 'Barrier opened successfully';
+            msg.style.color = '#00d084';
+        } else {
+            status.textContent = 'Closed';
+            status.className = 'barrier-status closed';
+            barrier.classList.remove('open');
+            msg.textContent = 'Barrier closed successfully';
+            msg.style.color = '#ff4444';
+        }
+    }
+
+    async function openBarrier() {
+        try {
+            await fetch(`${API_URL}/api/barrier/open`, {
+                method: 'POST',
+                headers: authHeaders()
+            });
+            setBarrierState(true);
+        } catch (e) {
+            document.getElementById('barrier-msg').textContent = 'Connection error';
+        }
+    }
+
+    async function closeBarrier() {
+        try {
+            await fetch(`${API_URL}/api/barrier/close`, {
+                method: 'POST',
+                headers: authHeaders()
+            });
+            setBarrierState(false);
+        } catch (e) {
+            document.getElementById('barrier-msg').textContent = 'Connection error';
+        }
+    }
+</script>
+</body>
+</html>

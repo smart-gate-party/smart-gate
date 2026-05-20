@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SmartGate AI</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="dashboard-layout">
+    <div class="sidebar">
+        <div>
+            <div class="logo sidebar-logo">SmartGate AI</div>
+            <div class="menu">
+                <button class="active-btn" onclick="location.href='/dashboard.html'">Dashboard</button>
+                <button onclick="location.href='/monitoring.html'">Monitoring</button>
+                <button onclick="location.href='/barrier.html'">Barrier Control</button>
+            </div>
+        </div>
+    </div>
+    <div class="main">
+        <div class="topbar">
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Manage vehicles and monitor parking access</p>
+
+        <div class="stats-grid">
+            <div class="stat-card"><span>Total Vehicles</span><h2 id="total">—</h2></div>
+            <div class="stat-card"><span>Active Passes</span><h2 id="active">—</h2></div>
+            <div class="stat-card"><span>Today Entries</span><h2 id="today">—</h2></div>
+            <div class="stat-card"><span>Denied Access</span><h2 id="denied">—</h2></div>
+        </div>
+
+        <div class="table-card">
+            <div class="table-top" style="display:flex;justify-content:space-between;align-items:center;">
+                <h3>Vehicle Database</h3>
+                <button class="green-btn" onclick="openModal()">+ Add Vehicle</button>
+            </div>
+            <table>
+                <tr>
+                    <th>License Plate</th>
+                    <th>Owner</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                <tbody id="vehicles-table"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;">
+    <div style="background:#0B1020;border:1px solid #1F2937;border-radius:20px;padding:36px;width:420px;">
+        <h3 style="margin-bottom:20px;font-size:24px;">Add Vehicle</h3>
+        <input type="text" id="plate-input" placeholder="License Plate (e.g. A123BB77)" style="width:100%;background:#040816;border:1px solid #1F2937;color:white;padding:16px;border-radius:14px;margin-bottom:14px;">
+        <input type="text" id="owner-input" placeholder="Owner Name" style="width:100%;background:#040816;border:1px solid #1F2937;color:white;padding:16px;border-radius:14px;margin-bottom:20px;">
+        <div id="modal-error" style="color:#EF4444;font-size:14px;margin-bottom:14px;display:none;"></div>
+        <div style="display:flex;gap:12px;">
+            <button class="green-btn" style="flex:1;" onclick="addVehicle()">Add</button>
+            <button class="logout-btn" style="flex:1;" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+    checkAuth();
+
+    async function loadVehicles() {
+        const res = await fetch('/api/vehicles', { headers: authHeaders() });
+        if (res.status === 403) { logout(); return; }
+        const vehicles = await res.json();
+
+        document.getElementById('total').textContent = vehicles.length;
+        document.getElementById('active').textContent = vehicles.filter(v => v.active).length;
+
+        document.getElementById('vehicles-table').innerHTML = vehicles.map(v => `
+            <tr>
+                <td>${v.plateNumber}</td>
+                <td>${v.ownerName || '—'}</td>
+                <td><span class="status ${v.active ? 'allowed' : 'denied'}">${v.active ? 'Active' : 'Inactive'}</span></td>
+                <td><button class="small-red" onclick="deleteVehicle(${v.id})">Delete</button></td>
+            </tr>
+        `).join('');
+    }
+
+    async function loadLogs() {
+        const res = await fetch('/api/logs', { headers: authHeaders() });
+        const logs = await res.json();
+        const today = new Date().toDateString();
+        const todayLogs = logs.filter(l => new Date(l.timestamp).toDateString() === today);
+        document.getElementById('today').textContent = todayLogs.length;
+        document.getElementById('denied').textContent = todayLogs.filter(l => !l.accessGranted).length;
+    }
+
+    async function deleteVehicle(id) {
+        if (!confirm('Delete this vehicle?')) return;
+        await fetch(`/api/vehicles/${id}`, { method: 'DELETE', headers: authHeaders() });
+        loadVehicles();
+    }
+
+    function openModal() {
+        document.getElementById('modal').style.display = 'flex';
+        document.getElementById('plate-input').value = '';
+        document.getElementById('owner-input').value = '';
+        document.getElementById('modal-error').style.display = 'none';
+    }
+
+    function closeModal() {
+        document.getElementById('modal').style.display = 'none';
+    }
+
+    async function addVehicle() {
+        const plateNumber = document.getElementById('plate-input').value.trim();
+        const ownerName = document.getElementById('owner-input').value.trim();
+        const err = document.getElementById('modal-error');
+
+        if (!plateNumber) {
+            err.textContent = 'License plate is required';
+            err.style.display = 'block';
+            return;
+        }
+
+        const res = await fetch('/api/vehicles', {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({ plateNumber, ownerName, isActive: true })
+        });
+
+        if (res.ok) { closeModal(); loadVehicles(); }
+        else { err.textContent = 'Error adding vehicle'; err.style.display = 'block'; }
+    }
+
+    loadVehicles();
+    loadLogs();
+</script>
+</body>
+</html>
