@@ -1,4 +1,3 @@
-// Вставь в начало каждой страницы кроме index и login
-if (!localStorage.getItem('token')) {
-    window.location.href = 'login.html';
-}
+function goToDashboard() { location.href = '/dashboard.html'; }
+function goToMonitoring() { location.href = '/monitoring.html'; }
+function goToBarrier() { location.href = '/barrier.html'; }
