@@ -12,9 +12,9 @@
         <div>
             <div class="logo sidebar-logo">SmartGate AI</div>
             <div class="menu">
-                <button onclick="location.href='dashboard.html'">Dashboard</button>
-                <button class="active-btn" onclick="location.href='monitoring.html'">Monitoring</button>
-                <button onclick="location.href='barrier.html'">Barrier Control</button>
+                <button onclick="location.href='/dashboard.html'">Dashboard</button>
+                <button class="active-btn">Monitoring</button>
+                <button onclick="location.href='/barrier.html'">Barrier Control</button>
             </div>
         </div>
     </div>
@@ -25,11 +25,12 @@
         </div>
 
         <h1 class="page-title">Real-Time Monitoring</h1>
+        <p class="page-subtitle">Live camera feed and AI detection logs</p>
 
         <div class="stats-grid">
             <div class="stat-card">
                 <span>AI Status</span>
-                <h2 style="color:#00d084">Active</h2>
+                <h2 style="color:#00E5A8; font-size:28px; margin-top:16px;">Active</h2>
             </div>
             <div class="stat-card">
                 <span>Detections Today</span>
@@ -37,21 +38,29 @@
             </div>
             <div class="stat-card">
                 <span>Access Granted</span>
-                <h2 id="access-granted" style="color:#00d084">—</h2>
+                <h2 id="access-granted" style="color:#00E5A8;">—</h2>
             </div>
             <div class="stat-card">
                 <span>Access Denied</span>
-                <h2 id="access-denied" style="color:#ff4444">—</h2>
+                <h2 id="access-denied" style="color:#EF4444;">—</h2>
             </div>
         </div>
 
         <div class="monitor-layout">
-            <div class="camera-feed">
-                <h3>Live Camera Feed</h3>
-                <div style="text-align:center; padding:40px; color:#666;">
+            <div class="camera-feed" style="flex-direction:column; padding:0; overflow:hidden;">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; width:100%;">
+                    <h3>Live Camera Feed</h3>
+                    <span class="status allowed">● Live</span>
+                </div>
+                <img id="camera-img"
+                     src="http://localhost:5000/video"
+                     style="width:100%; height:420px; object-fit:cover;"
+                     alt="Camera Feed"
+                     onerror="showCameraError()">
+                <div id="camera-error" style="display:none; text-align:center; padding:40px; color:#9CA3AF;">
                     <p style="font-size:48px;">📷</p>
-                    <p>Camera Feed Active</p>
-                    <p style="font-size:12px;">AI License Plate Detection Running</p>
+                    <p>Camera offline</p>
+                    <p style="font-size:12px; margin-top:8px;">Run: python stream.py</p>
                 </div>
             </div>
 
@@ -63,21 +72,18 @@
     </div>
 </div>
 
+<script src="js/api.js"></script>
 <script>
-    const API_URL = '';
-    const token = localStorage.getItem('token');
-    if (!token) window.location.href = 'login.html';
-
-    function authHeaders() {
-        return {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        };
-    }
+    checkAuth();
 
     function logout() {
         localStorage.removeItem('token');
-        window.location.href = 'login.html';
+        window.location.href = '/login.html';
+    }
+
+    function showCameraError() {
+        document.getElementById('camera-img').style.display = 'none';
+        document.getElementById('camera-error').style.display = 'block';
     }
 
     function formatTime(ts) {
@@ -86,11 +92,13 @@
 
     async function loadLogs() {
         try {
-            const res = await fetch(`${API_URL}/api/logs`, { headers: authHeaders() });
+            const res = await fetch('/api/logs', { headers: authHeaders() });
             const logs = await res.json();
 
             const today = new Date().toDateString();
-            const todayLogs = logs.filter(l => new Date(l.timestamp).toDateString() === today);
+            const todayLogs = logs.filter(l =>
+                new Date(l.timestamp).toDateString() === today
+            );
             const granted = todayLogs.filter(l => l.accessGranted).length;
             const denied = todayLogs.filter(l => !l.accessGranted).length;
 
@@ -101,12 +109,12 @@
             const list = document.getElementById('history-list');
             list.innerHTML = logs.slice(0, 20).map(l => `
                 <div class="history-item ${l.accessGranted ? 'green-history' : 'red-history'}">
-                    <strong>${l.plateNumber}</strong>
-                    <span class="status ${l.accessGranted ? 'allowed' : 'denied'}">
-                        ${l.accessGranted ? 'Granted' : 'Denied'}
-                    </span>
-                    <br>
-                    <small>${formatTime(l.timestamp)}</small>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong>${l.plateNumber}</strong>
+                        <span style="font-size:12px;">${l.accessGranted ? '✅ Granted' : '❌ Denied'}</span>
+                    </div>
+                    ${l.ownerName ? `<div style="font-size:12px; margin-top:4px;">${l.ownerName}</div>` : ''}
+                    <div style="font-size:11px; margin-top:4px; opacity:0.7;">${formatTime(l.timestamp)}</div>
                 </div>
             `).join('');
         } catch (e) {
@@ -115,7 +123,7 @@
     }
 
     loadLogs();
-    setInterval(loadLogs, 5000); // обновляем каждые 5 секунд
+    setInterval(loadLogs, 5000);
 </script>
 </body>
 </html>
