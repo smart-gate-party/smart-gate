@@ -22,11 +22,13 @@ public class BarrierController {
 
     @PostMapping("/open")
     public ResponseEntity<String> open() {
+        barrierService.manualOpen();
         return ResponseEntity.ok("Шлагбаум открыт");
     }
 
     @PostMapping("/close")
     public ResponseEntity<String> close() {
+        barrierService.manualClose();
         return ResponseEntity.ok("Шлагбаум закрыт");
     }
 }
