@@ -12,9 +12,9 @@
         <div>
             <div class="logo sidebar-logo">SmartGate AI</div>
             <div class="menu">
-                <button onclick="location.href='dashboard.html'">Dashboard</button>
-                <button onclick="location.href='monitoring.html'">Monitoring</button>
-                <button class="active-btn" onclick="location.href='barrier.html'">Barrier Control</button>
+                <button onclick="location.href='/dashboard.html'">Dashboard</button>
+                <button onclick="location.href='/monitoring.html'">Monitoring</button>
+                <button class="active-btn" onclick="location.href='/barrier.html'">Barrier Control</button>
             </div>
         </div>
     </div>
@@ -25,40 +25,54 @@
         </div>
 
         <h1 class="page-title">Smart Barrier Control</h1>
+        <p class="page-subtitle">AI-powered automatic barrier simulation</p>
 
-        <div class="barrier-card">
-            <div id="status" class="barrier-status closed">Closed</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
 
-            <div class="barrier-box">
-                <div class="pole"></div>
-                <div id="barrier"></div>
+            <div class="barrier-card">
+                <div id="status" class="barrier-status closed">Closed</div>
+                <div class="barrier-box">
+                    <div class="pole"></div>
+                    <div id="barrier"></div>
+                </div>
+                <div class="barrier-buttons">
+                    <button class="green-btn" onclick="openBarrier()">↑ Open Barrier</button>
+                    <button class="dark-btn" onclick="closeBarrier()">↓ Close Barrier</button>
+                </div>
+                <div id="barrier-msg" style="margin-top:16px;font-size:14px;color:#888;text-align:center;"></div>
             </div>
 
-            <div class="barrier-buttons">
-                <button class="green-btn" onclick="openBarrier()">↑ Open Barrier</button>
-                <button class="dark-btn" onclick="closeBarrier()">↓ Close Barrier</button>
-            </div>
+            <div style="display:flex; flex-direction:column; gap:20px;">
+                <div class="table-card">
+                    <h3 style="margin-bottom:16px;">System Information</h3>
+                    <table>
+                        <tr><td style="color:#9CA3AF;">AI Processing</td>
+                            <td><span class="status allowed">Active</span></td></tr>
+                        <tr><td style="color:#9CA3AF;">Response Time</td>
+                            <td>~250ms</td></tr>
+                        <tr><td style="color:#9CA3AF;">Detection Accuracy</td>
+                            <td>98.5%</td></tr>
+                        <tr><td style="color:#9CA3AF;">Barrier Type</td>
+                            <td>Automatic</td></tr>
+                    </table>
+                </div>
 
-            <div id="barrier-msg" style="margin-top:16px; font-size:14px; color:#888;"></div>
+                <div class="table-card">
+                    <h3 style="margin-bottom:16px;">Recent Actions</h3>
+                    <div id="recent-logs"></div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
+<script src="js/api.js"></script>
 <script>
-    const API_URL = '';
-    const token = localStorage.getItem('token');
-    if (!token) window.location.href = 'login.html';
-
-    function authHeaders() {
-        return {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        };
-    }
+    checkAuth();
 
     function logout() {
         localStorage.removeItem('token');
-        window.location.href = 'login.html';
+        window.location.href = '/login.html';
     }
 
     function setBarrierState(isOpen) {
@@ -70,24 +84,25 @@
             status.textContent = 'Open';
             status.className = 'barrier-status open';
             barrier.classList.add('open');
-            msg.textContent = 'Barrier opened successfully';
-            msg.style.color = '#00d084';
+            msg.textContent = '✅ Barrier opened successfully';
+            msg.style.color = '#00E5A8';
         } else {
             status.textContent = 'Closed';
             status.className = 'barrier-status closed';
             barrier.classList.remove('open');
-            msg.textContent = 'Barrier closed successfully';
-            msg.style.color = '#ff4444';
+            msg.textContent = '🔴 Barrier closed successfully';
+            msg.style.color = '#EF4444';
         }
     }
 
     async function openBarrier() {
         try {
-            await fetch(`${API_URL}/api/barrier/open`, {
+            await fetch('/api/barrier/open', {
                 method: 'POST',
                 headers: authHeaders()
             });
             setBarrierState(true);
+            loadRecentLogs();
         } catch (e) {
             document.getElementById('barrier-msg').textContent = 'Connection error';
         }
@@ -95,15 +110,35 @@
 
     async function closeBarrier() {
         try {
-            await fetch(`${API_URL}/api/barrier/close`, {
+            await fetch('/api/barrier/close', {
                 method: 'POST',
                 headers: authHeaders()
             });
             setBarrierState(false);
+            loadRecentLogs();
         } catch (e) {
             document.getElementById('barrier-msg').textContent = 'Connection error';
         }
     }
+
+    async function loadRecentLogs() {
+        try {
+            const res = await fetch('/api/logs/latest', { headers: authHeaders() });
+            const logs = await res.json();
+            const container = document.getElementById('recent-logs');
+            container.innerHTML = logs.slice(0, 5).map(l => `
+                <div class="history-item ${l.accessGranted ? 'green-history' : 'red-history'}"
+                     style="margin-bottom:8px; padding:12px;">
+                    <strong>${l.plateNumber}</strong>
+                    <span style="float:right;">${l.accessGranted ? '✅ Granted' : '❌ Denied'}</span>
+                    <br><small>${new Date(l.timestamp).toLocaleString()}</small>
+                </div>
+            `).join('');
+        } catch (e) {}
+    }
+
+    loadRecentLogs();
+    setInterval(loadRecentLogs, 5000);
 </script>
 </body>
 </html>

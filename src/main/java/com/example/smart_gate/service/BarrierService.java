@@ -38,4 +38,20 @@ public class BarrierService {
                 allowed ? "Доступ разрешён" : "Доступ запрещён"
         );
     }
+
+    public void manualOpen() {
+        accessLogRepository.save(AccessLog.builder()
+                .plateNumber("MANUAL")
+                .accessGranted(true)
+                .ownerName("Администратор")
+                .build());
+    }
+
+    public void manualClose() {
+        accessLogRepository.save(AccessLog.builder()
+                .plateNumber("MANUAL")
+                .accessGranted(false)
+                .ownerName("Администратор")
+                .build());
+    }
 }
