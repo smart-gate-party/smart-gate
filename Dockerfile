@@ -1,7 +1,7 @@
 # ==========================================
 # Этап 1: Сборка приложения (Build Stage)
 # ==========================================
-FROM maven:3.8.8-eclipse-temurin-17 AS builder
+FROM maven:3.8.8-eclipse-temurin-21 AS builder
 
 # Устанавливаем рабочую папку для сборки
 WORKDIR /app
@@ -24,7 +24,7 @@ RUN mvn clean package -DskipTests
 # ==========================================
 # Этап 2: Запуск приложения (Run Stage)
 # ==========================================
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 
 # Настройка безопасности: запускаем приложение от не-root пользователя
 RUN addgroup -S spring && adduser -S spring -G spring
