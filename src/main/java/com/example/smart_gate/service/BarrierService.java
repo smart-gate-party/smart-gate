@@ -9,6 +9,8 @@ import com.example.smart_gate.repository.CarRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Optional;
 
 @Service
@@ -40,6 +42,16 @@ public class BarrierService {
     }
 
     public void manualOpen() {
+        // Шлём сигнал на Python
+        try {
+            HttpURLConnection conn = (HttpURLConnection)
+                    new URL("http://localhost:5001/open").openConnection();
+            conn.setRequestMethod("POST");
+            conn.getResponseCode();
+        } catch (Exception e) {
+            System.out.println("⚠️ Python недоступен: " + e.getMessage());
+        }
+
         accessLogRepository.save(AccessLog.builder()
                 .plateNumber("MANUAL")
                 .accessGranted(true)
@@ -48,6 +60,16 @@ public class BarrierService {
     }
 
     public void manualClose() {
+        // Шлём сигнал на Python
+        try {
+            HttpURLConnection conn = (HttpURLConnection)
+                    new URL("http://localhost:5001/close").openConnection();
+            conn.setRequestMethod("POST");
+            conn.getResponseCode();
+        } catch (Exception e) {
+            System.out.println("⚠️ Python недоступен: " + e.getMessage());
+        }
+
         accessLogRepository.save(AccessLog.builder()
                 .plateNumber("MANUAL")
                 .accessGranted(false)
