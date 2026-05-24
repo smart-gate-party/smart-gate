@@ -45,7 +45,7 @@ public class BarrierService {
         // Шлём сигнал на Python
         try {
             HttpURLConnection conn = (HttpURLConnection)
-                    new URL("http://localhost:5001/open").openConnection();
+                    new URL("https://shading-unreeling-hurricane.ngrok-free.dev").openConnection();
             conn.setRequestMethod("POST");
             conn.getResponseCode();
         } catch (Exception e) {
@@ -63,7 +63,7 @@ public class BarrierService {
         // Шлём сигнал на Python
         try {
             HttpURLConnection conn = (HttpURLConnection)
-                    new URL("http://localhost:5001/close").openConnection();
+                    new URL("https://shading-unreeling-hurricane.ngrok-free.dev").openConnection();
             conn.setRequestMethod("POST");
             conn.getResponseCode();
         } catch (Exception e) {
