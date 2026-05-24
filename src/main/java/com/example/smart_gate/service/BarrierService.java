@@ -42,11 +42,11 @@ public class BarrierService {
     }
 
     public void manualOpen() {
-        // Шлём сигнал на Python
         try {
             HttpURLConnection conn = (HttpURLConnection)
-                    new URL("https://shading-unreeling-hurricane.ngrok-free.dev").openConnection();
+                    new URL("https://shading-unreeling-hurricane.ngrok-free.dev/open").openConnection();
             conn.setRequestMethod("POST");
+            conn.setDoOutput(true);
             conn.getResponseCode();
         } catch (Exception e) {
             System.out.println("⚠️ Python недоступен: " + e.getMessage());
@@ -60,11 +60,11 @@ public class BarrierService {
     }
 
     public void manualClose() {
-        // Шлём сигнал на Python
         try {
             HttpURLConnection conn = (HttpURLConnection)
-                    new URL("https://shading-unreeling-hurricane.ngrok-free.dev").openConnection();
+                    new URL("https://shading-unreeling-hurricane.ngrok-free.dev/close").openConnection();
             conn.setRequestMethod("POST");
+            conn.setDoOutput(true);
             conn.getResponseCode();
         } catch (Exception e) {
             System.out.println("⚠️ Python недоступен: " + e.getMessage());
